@@ -9,7 +9,9 @@ import {
   Utensils,
   Map as MapIcon,
   Bell,
-  UserCircle
+  UserCircle,
+  BookOpen,
+  PlusSquare
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -27,12 +29,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSig
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     ];
 
-    if (role === 'mess_owner') {
+    if (role === 'mess_owner' || role === 'admin') {
+      const adminItems = role === 'admin' ? [
+        { id: 'users', label: 'User Management', icon: Users },
+      ] : [];
+
       return [
         ...baseItems,
+        { id: 'menu-manager', label: 'Meal Menu', icon: PlusSquare },
         { id: 'attendance', label: 'Attendance Logs', icon: Users },
         { id: 'meal-log', label: 'Meal Prep Log', icon: Utensils },
         { id: 'ngos', label: 'NGO Network', icon: MapIcon },
+        ...adminItems,
         { id: 'history', label: 'Impact History', icon: History },
       ];
     }
@@ -46,19 +54,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSig
       ];
     }
 
-    if (role === 'student') {
+    if (role === 'student' || role === 'teacher') {
       return [
         ...baseItems,
-        { id: 'check-in', label: 'Meal Check-in', icon: UserCircle },
-        { id: 'menu', label: 'Today\'s Menu', icon: Utensils },
-      ];
-    }
-
-    if (role === 'admin') {
-      return [
-        ...baseItems,
-        { id: 'users', label: 'User Management', icon: Users },
-        { id: 'system-stats', label: 'Global Analytics', icon: History },
+        { id: 'check-in', label: 'Meal Check-in', icon: role === 'teacher' ? BookOpen : UserCircle },
+        { id: 'menu-view', label: 'Today\'s Menu', icon: Utensils },
       ];
     }
 

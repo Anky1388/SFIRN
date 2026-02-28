@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: {
     type: String,
-    enum: ['admin', 'mess_owner', 'ngo_rep', 'student'],
+    enum: ['admin', 'mess_owner', 'ngo_rep', 'student', 'teacher'],
     default: 'student'
   },
   organization_name: { type: String }, // For NGOs or specific Mess units

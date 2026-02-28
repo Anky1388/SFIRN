@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Utensils, Mail, Lock, ArrowRight, ShieldCheck, Users, Heart, GraduationCap, Shield } from 'lucide-react';
+import { Utensils, Mail, Lock, ArrowRight, ShieldCheck, Heart, GraduationCap, Shield, BookOpen } from 'lucide-react';
 import { GlassCard } from './GlassCard';
 
 interface LoginProps {
@@ -10,7 +10,7 @@ interface LoginProps {
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('mess_owner');
+  const [role, setRole] = useState('student');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,21 +24,20 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   const roles = [
+    { id: 'student', label: 'Student', icon: GraduationCap, color: 'bg-blue-500' },
+    { id: 'teacher', label: 'Teacher', icon: BookOpen, color: 'bg-orange-500' },
     { id: 'mess_owner', label: 'Mess Owner', icon: Utensils, color: 'bg-emerald-500' },
     { id: 'ngo_rep', label: 'NGO Rep', icon: Heart, color: 'bg-rose-500' },
-    { id: 'student', label: 'Student', icon: GraduationCap, color: 'bg-blue-500' },
     { id: 'admin', label: 'Admin', icon: Shield, color: 'bg-indigo-500' },
   ];
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6 relative overflow-hidden">
-      {/* 3D Background Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full animate-pulse" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full" />
 
-      <GlassCard className="w-full max-w-2xl border-white/10" delay={0.1}>
+      <GlassCard className="w-full max-w-4xl border-white/10" delay={0.1}>
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Left Side: Role Selection */}
           <div className="md:w-1/2 space-y-6">
             <div className="mb-8">
               <h1 className="text-3xl font-black text-white tracking-tight mb-2">Welcome to SFIRN</h1>
@@ -68,7 +67,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
           </div>
 
-          {/* Right Side: Login Form */}
           <div className="md:w-1/2 border-t md:border-t-0 md:border-l border-white/10 pt-8 md:pt-0 md:pl-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
