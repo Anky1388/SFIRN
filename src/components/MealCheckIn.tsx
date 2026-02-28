@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Clock, Utensils, Calendar as CalendarIcon, Send, CheckCircle2 } from 'lucide-react';
 import { GlassCard } from './GlassCard';
-import { getCurrentMealSlot } from '../lib/utils';
+import { getCurrentMealSlot, getSlotStatus } from '../lib/utils';
 
 interface MealCheckInProps {
   userRole: string;
@@ -20,7 +20,7 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
       setCurrentMealSlot(getCurrentMealSlot());
     };
 
-    const timer = setInterval(updateSlot, 60000); // Sync every minute
+    const timer = setInterval(updateSlot, 1000); // Check every second for maximum precision
     return () => clearInterval(timer);
   }, []);
 
@@ -61,9 +61,10 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
   });
 
   const mealSlots = [
-    { name: 'Breakfast', time: '08:00 - 09:30', id: 'breakfast' },
-    { name: 'Lunch', time: '12:30 - 14:00', id: 'lunch' },
-    { name: 'Dinner', time: '19:30 - 21:00', id: 'dinner' },
+    { name: 'Breakfast', time: '08:00 - 08:55', id: 'breakfast' as const },
+    { name: 'Lunch', time: '12:15 - 13:00', id: 'lunch' as const },
+    { name: 'Snacks', time: '16:45 - 17:00', id: 'snacks' as const },
+    { name: 'Dinner', time: '20:00 - 21:00', id: 'dinner' as const },
   ];
 
   return (
@@ -191,7 +192,10 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
             </h3>
             <div className="space-y-3">
               {mealSlots.map((slot) => {
-                const isActive = currentMealSlot === slot.id;
+                const status = getSlotStatus(slot.id);
+                const isActive = status === 'CURRENT';
+                const isPassed = status === 'PASSED';
+
                 return (
                   <div
                     key={slot.id}
@@ -203,18 +207,28 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
                   >
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
-                        <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
-                        <span className={`font-black text-sm ${isActive ? 'text-emerald-900' : 'text-slate-600'}`}>
+                        <div className={`w-2.5 h-2.5 rounded-full ${
+                          isActive ? 'bg-emerald-500 animate-pulse' :
+                          isPassed ? 'bg-slate-300' : 'bg-blue-400'
+                        }`} />
+                        <span className={`font-black text-sm ${
+                          isActive ? 'text-emerald-900' :
+                          isPassed ? 'text-slate-400' : 'text-slate-600'
+                        }`}>
                           {slot.name}
                         </span>
                       </div>
-                      {isActive && (
-                        <span className="text-[9px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                          CURRENT
-                        </span>
-                      )}
+                      <span className={`text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-tighter ${
+                        isActive ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' :
+                        isPassed ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'
+                      }`}>
+                        {status}
+                      </span>
                     </div>
-                    <p className={`text-xs mt-1 font-bold ${isActive ? 'text-emerald-800' : 'text-slate-500'}`}>
+                    <p className={`text-xs mt-1 font-bold ${
+                      isActive ? 'text-emerald-800' :
+                      isPassed ? 'text-slate-300' : 'text-slate-500'
+                    }`}>
                       {slot.time}
                     </p>
                   </div>

@@ -28,22 +28,40 @@ export function getScoreGrade(score: number): 'Platinum' | 'Gold' | 'Silver' | '
   return 'Bronze';
 }
 
-export type MealType = 'breakfast' | 'lunch' | 'dinner';
+export type MealType = 'breakfast' | 'lunch' | 'snacks' | 'dinner';
+
+export const MEAL_SCHEDULE = {
+  breakfast: { start: 480, end: 535, label: '08:00 - 08:55' },
+  lunch: { start: 735, end: 780, label: '12:15 - 13:00' },
+  snacks: { start: 1005, end: 1020, label: '16:45 - 17:00' },
+  dinner: { start: 1200, end: 1260, label: '20:00 - 21:00' }
+};
 
 export function getCurrentMealSlot(): MealType {
   const now = new Date();
-  const hour = now.getHours();
-  const min = now.getMinutes();
-  const totalMin = hour * 60 + min;
+  const totalMin = now.getHours() * 60 + now.getMinutes();
 
-  // Breakfast: 08:00 - 10:00 (480 - 600 min)
-  if (totalMin >= 480 && totalMin <= 600) return 'breakfast';
-  // Lunch: 12:30 - 14:30 (750 - 870 min)
-  if (totalMin >= 750 && totalMin <= 870) return 'lunch';
-  // Dinner: 19:30 - 21:30 (1170 - 1290 min)
-  if (totalMin >= 1170 && totalMin <= 1290) return 'dinner';
+  if (totalMin >= MEAL_SCHEDULE.breakfast.start && totalMin <= MEAL_SCHEDULE.breakfast.end) return 'breakfast';
+  if (totalMin >= MEAL_SCHEDULE.lunch.start && totalMin <= MEAL_SCHEDULE.lunch.end) return 'lunch';
+  if (totalMin >= MEAL_SCHEDULE.snacks.start && totalMin <= MEAL_SCHEDULE.snacks.end) return 'snacks';
+  if (totalMin >= MEAL_SCHEDULE.dinner.start && totalMin <= MEAL_SCHEDULE.dinner.end) return 'dinner';
 
-  return 'lunch';
+  if (totalMin < MEAL_SCHEDULE.breakfast.start) return 'breakfast';
+  if (totalMin < MEAL_SCHEDULE.lunch.start) return 'lunch';
+  if (totalMin < MEAL_SCHEDULE.snacks.start) return 'snacks';
+  if (totalMin < MEAL_SCHEDULE.dinner.start) return 'dinner';
+
+  return 'breakfast';
+}
+
+export function getSlotStatus(mealId: MealType): 'PASSED' | 'CURRENT' | 'UPCOMING' {
+  const now = new Date();
+  const totalMin = now.getHours() * 60 + now.getMinutes();
+  const slot = MEAL_SCHEDULE[mealId];
+
+  if (totalMin >= slot.start && totalMin <= slot.end) return 'CURRENT';
+  if (totalMin > slot.end) return 'PASSED';
+  return 'UPCOMING';
 }
 
 export const format24hTime = (date: Date) => {

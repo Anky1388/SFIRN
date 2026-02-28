@@ -1,4 +1,4 @@
-export type MealType = 'breakfast' | 'lunch' | 'dinner';
+export type MealType = 'breakfast' | 'lunch' | 'snacks' | 'dinner';
 
 export interface AttendanceLog {
   id?: string;
@@ -56,6 +56,7 @@ export interface Prediction {
   target_date: string;
   breakfast_surplus_kg: number;
   lunch_surplus_kg: number;
+  snacks_surplus_kg: number;
   dinner_surplus_kg: number;
   confidence: number;
   generated_at?: string;

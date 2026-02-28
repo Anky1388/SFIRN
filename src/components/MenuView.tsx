@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Utensils, Clock, Calendar as CalendarIcon, Info, ChevronRight } from 'lucide-react';
+import { Utensils, Calendar as CalendarIcon, Info, ChevronRight, Clock } from 'lucide-react';
 import { GlassCard } from './GlassCard';
 import { MealType } from '../types';
+import { getCurrentMealSlot } from '../lib/utils';
 
 export const MenuView: React.FC = () => {
-  const [selectedMeal, setSelectedMeal] = useState<MealType>('lunch');
+  const [selectedMeal, setSelectedMeal] = useState<MealType>(getCurrentMealSlot());
   const [currentTime, setCurrentTime] = useState(new Date());
   const [publishedMenu, setPublishedMenu] = useState<any>(null);
 
@@ -27,16 +28,7 @@ export const MenuView: React.FC = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      const now = new Date();
-      setCurrentTime(now);
-
-      const hour = now.getHours();
-      const min = now.getMinutes();
-      const totalMin = hour * 60 + min;
-
-      if (totalMin >= 480 && totalMin <= 600) setSelectedMeal('breakfast');
-      else if (totalMin >= 750 && totalMin <= 870) setSelectedMeal('lunch');
-      else if (totalMin >= 1170 && totalMin <= 1290) setSelectedMeal('dinner');
+      setCurrentTime(new Date());
     }, 1000);
     return () => clearInterval(timer);
   }, []);
@@ -46,9 +38,10 @@ export const MenuView: React.FC = () => {
     const totalMin = now.getHours() * 60 + now.getMinutes();
 
     const slots = {
-      'Breakfast': { start: 480, end: 600 },
-      'Lunch': { start: 750, end: 870 },
-      'Dinner': { start: 1170, end: 1290 }
+      'Breakfast': { start: 480, end: 535 },  // 08:00 - 08:55
+      'Lunch': { start: 735, end: 780 },      // 12:15 - 13:00
+      'Snacks': { start: 1005, end: 1020 },   // 16:45 - 17:00
+      'Dinner': { start: 1200, end: 1260 }    // 20:00 - 21:00
     };
 
     const slot = slots[name as keyof typeof slots];
@@ -66,6 +59,13 @@ export const MenuView: React.FC = () => {
 
   const currentItems = publishedMenu ? publishedMenu[selectedMeal] : [];
 
+  const mealSlotsData = [
+    { name: 'Breakfast', time: '08:00 - 08:55', id: 'breakfast' as const },
+    { name: 'Lunch', time: '12:15 - 13:00', id: 'lunch' as const },
+    { name: 'Snacks', time: '16:45 - 17:00', id: 'snacks' as const },
+    { name: 'Dinner', time: '20:00 - 21:00', id: 'dinner' as const },
+  ];
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
@@ -76,23 +76,23 @@ export const MenuView: React.FC = () => {
             {today}
           </p>
         </div>
-        <GlassCard className="py-3 px-6 bg-slate-900 text-white flex items-center gap-4 border-none shadow-xl">
-          <Clock className="w-5 h-5 text-emerald-400" />
-          <div>
-            <p className="text-[10px] font-black uppercase text-slate-400 leading-none mb-1">Current Time</p>
-            <p className="text-lg font-black leading-none">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
-          </div>
-        </GlassCard>
+        <div className="px-6 py-3 bg-white/80 backdrop-blur-md rounded-2xl border border-white shadow-xl flex items-center gap-3">
+           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+           <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
+             {selectedMeal} Menu Live
+           </span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        {(['breakfast', 'lunch', 'dinner'] as MealType[]).map((type) => {
-          const status = getMealStatus(type.charAt(0).toUpperCase() + type.slice(1));
-          const isActive = selectedMeal === type;
+      {/* Manual Selection Allowed for earlier/future slots */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {mealSlotsData.map((slot) => {
+          const status = getMealStatus(slot.name);
+          const isActive = selectedMeal === slot.id;
           return (
             <button
-              key={type}
-              onClick={() => setSelectedMeal(type)}
+              key={slot.id}
+              onClick={() => setSelectedMeal(slot.id)}
               className={`group relative overflow-hidden p-6 rounded-3xl border-2 transition-all duration-500 ${
                 isActive
                   ? 'bg-emerald-600 border-transparent shadow-2xl shadow-emerald-600/30 scale-[1.02]'
@@ -101,11 +101,11 @@ export const MenuView: React.FC = () => {
             >
               <div className="relative z-10 flex flex-col items-center gap-2">
                 <Utensils className={`w-6 h-6 ${isActive ? 'text-white' : 'text-emerald-500'}`} />
-                <span className={`text-lg font-black capitalize ${isActive ? 'text-white' : 'text-slate-900'}`}>
-                  {type}
+                <span className={`text-sm font-black capitalize ${isActive ? 'text-white' : 'text-slate-900'}`}>
+                  {slot.name}
                 </span>
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${
-                  isActive ? 'bg-white/20 text-white' : status === 'Active' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'
+                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${
+                  isActive ? 'bg-white/20 text-white' : status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
                 }`}>
                   {status}
                 </span>
@@ -126,15 +126,15 @@ export const MenuView: React.FC = () => {
                  {selectedMeal.toUpperCase()} MENU
                </h3>
                <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                 currentItems.length > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                 currentItems?.length > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
                }`}>
-                 {currentItems.length > 0 ? 'Menu Published' : 'No Menu Uploaded'}
+                 {currentItems?.length > 0 ? 'Menu Published' : 'No Menu Uploaded'}
                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <AnimatePresence mode="wait">
-                {currentItems.length > 0 ? (
+                {currentItems?.length > 0 ? (
                   currentItems.map((item: any, idx: number) => (
                     <motion.div
                       key={item.id || idx}
@@ -144,7 +144,7 @@ export const MenuView: React.FC = () => {
                       className="p-5 bg-white border border-slate-50 rounded-3xl shadow-md hover:shadow-xl transition-all group flex items-center justify-between"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center group-hover:bg-emerald-600 transition-colors duration-500">
+                        <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center group-hover:bg-emerald-500 transition-colors duration-500">
                            <Utensils className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors duration-500" />
                         </div>
                         <div>
@@ -158,7 +158,7 @@ export const MenuView: React.FC = () => {
                 ) : (
                   <div className="col-span-2 flex flex-col items-center justify-center py-20 text-slate-500">
                     <Utensils className="w-12 h-12 mb-4 opacity-20 text-slate-900" />
-                    <p className="font-black uppercase tracking-widest text-xs">Menu for this slot will be available soon.</p>
+                    <p className="font-black uppercase tracking-widest text-xs">No items for this slot.</p>
                   </div>
                 )}
               </AnimatePresence>
@@ -170,14 +170,10 @@ export const MenuView: React.FC = () => {
           <GlassCard className="bg-white/90 border-white shadow-2xl">
              <h3 className="font-black text-xl text-slate-900 mb-6 flex items-center gap-3">
                <Clock className="w-6 h-6 text-emerald-600" />
-               Upcoming Meals
+               Daily Schedule
              </h3>
              <div className="space-y-3">
-                {[
-                  { name: 'Breakfast', time: '08:00 AM - 10:00 AM' },
-                  { name: 'Lunch', time: '12:30 PM - 02:30 PM' },
-                  { name: 'Dinner', time: '07:30 PM - 09:30 PM' }
-                ].map((m, i) => {
+                {mealSlotsData.map((m, i) => {
                   const status = getMealStatus(m.name);
                   const isActive = status === 'Active';
                   return (
@@ -205,16 +201,6 @@ export const MenuView: React.FC = () => {
                 })}
              </div>
           </GlassCard>
-
-          <div className="p-8 rounded-[32px] bg-slate-900 text-white shadow-2xl relative overflow-hidden group">
-             <div className="relative z-10">
-                <h4 className="font-black text-xl mb-3">Live Updates</h4>
-                <p className="text-slate-400 text-sm font-bold leading-relaxed">
-                  The menu automatically switches based on the current time slot. Make sure to mark your attendance before the slot begins.
-                </p>
-             </div>
-             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 blur-3xl -mr-16 -mt-16 group-hover:bg-emerald-500/30 transition-all" />
-          </div>
         </div>
       </div>
     </div>
