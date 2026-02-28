@@ -27,3 +27,30 @@ export function getScoreGrade(score: number): 'Platinum' | 'Gold' | 'Silver' | '
   if (score >= 60) return 'Silver';
   return 'Bronze';
 }
+
+export type MealType = 'breakfast' | 'lunch' | 'dinner';
+
+export function getCurrentMealSlot(): MealType {
+  const now = new Date();
+  const hour = now.getHours();
+  const min = now.getMinutes();
+  const totalMin = hour * 60 + min;
+
+  // Breakfast: 08:00 - 10:00 (480 - 600 min)
+  if (totalMin >= 480 && totalMin <= 600) return 'breakfast';
+  // Lunch: 12:30 - 14:30 (750 - 870 min)
+  if (totalMin >= 750 && totalMin <= 870) return 'lunch';
+  // Dinner: 19:30 - 21:30 (1170 - 1290 min)
+  if (totalMin >= 1170 && totalMin <= 1290) return 'dinner';
+
+  return 'lunch';
+}
+
+export const format24hTime = (date: Date) => {
+  return date.toLocaleTimeString('en-GB', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+};

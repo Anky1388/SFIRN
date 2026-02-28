@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Clock, Utensils, Calendar as CalendarIcon, Send, CheckCircle2 } from 'lucide-react';
 import { GlassCard } from './GlassCard';
+import { getCurrentMealSlot } from '../lib/utils';
 
 interface MealCheckInProps {
   userRole: string;
@@ -11,6 +12,17 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
   const [status, setStatus] = useState<'pending' | 'present' | 'absent'>('pending');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [currentMealSlot, setCurrentMealSlot] = useState(getCurrentMealSlot());
+
+  // Real-time Meal Slot Synchronization
+  useEffect(() => {
+    const updateSlot = () => {
+      setCurrentMealSlot(getCurrentMealSlot());
+    };
+
+    const timer = setInterval(updateSlot, 60000); // Sync every minute
+    return () => clearInterval(timer);
+  }, []);
 
   const handleAttendance = (value: 'present' | 'absent') => {
     if (!isSubmitted) {
@@ -23,20 +35,17 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
 
     setLoading(true);
 
-    // Simulate API Call & Real-time reflection logic
     setTimeout(() => {
       const attendanceData = {
         role: userRole,
         status: status,
         timestamp: new Date().toISOString(),
-        mealSlot: 'lunch' // Hardcoded for demo, usually dynamic
+        mealSlot: currentMealSlot
       };
 
-      // Real-time synchronization logic: Save to localStorage so Mess Owner can read it
       const existingLogs = JSON.parse(localStorage.getItem('sfirn_attendance_sync') || '[]');
       localStorage.setItem('sfirn_attendance_sync', JSON.stringify([...existingLogs, attendanceData]));
 
-      // Trigger global event for Mess Owner/Admin dashboards to update
       window.dispatchEvent(new Event('storage'));
 
       setLoading(false);
@@ -51,13 +60,19 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
     day: 'numeric'
   });
 
+  const mealSlots = [
+    { name: 'Breakfast', time: '08:00 - 09:30', id: 'breakfast' },
+    { name: 'Lunch', time: '12:30 - 14:00', id: 'lunch' },
+    { name: 'Dinner', time: '19:30 - 21:00', id: 'dinner' },
+  ];
+
   return (
     <div className="p-8 max-w-5xl mx-auto">
       <div className="mb-10">
         <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">
           {userRole === 'teacher' ? 'Faculty Meal Check-in' : 'Student Meal Check-in'}
         </h1>
-        <p className="text-slate-600 font-semibold">Confirm your attendance to help the mess team optimize food preparation.</p>
+        <p className="text-slate-600 font-semibold">Confirm your attendance for the <span className="text-emerald-600 uppercase font-black">{currentMealSlot}</span> slot.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -76,7 +91,7 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
               <div className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-tighter shadow-lg transition-all ${
                 isSubmitted ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-slate-900 text-white shadow-slate-900/20'
               }`}>
-                {isSubmitted ? 'Response Logged' : 'Session Active'}
+                {isSubmitted ? 'Response Logged' : `${currentMealSlot} slot Active`}
               </div>
             </div>
 
@@ -90,7 +105,7 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
                     exit={{ opacity: 0, y: -20 }}
                   >
                     <p className="text-center text-slate-400 font-black mb-8 uppercase tracking-[0.2em] text-xs">
-                      Confirm your presence for the next meal
+                      Confirm presence for {currentMealSlot}
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-6 mb-10">
@@ -136,7 +151,7 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
                       ) : (
                         <>
                           <Send className="w-6 h-6" />
-                          Submit Attendance
+                          Confirm for {currentMealSlot}
                         </>
                       )}
                     </button>
@@ -148,38 +163,23 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
                     animate={{ opacity: 1, scale: 1 }}
                     className="flex flex-col items-center py-10"
                   >
-                    <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                    <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6 shadow-inner border border-emerald-200">
                        <CheckCircle2 className="w-12 h-12 text-emerald-600" />
                     </div>
-                    <h3 className="text-3xl font-black text-slate-900 mb-2 text-center">Successfully Submitted!</h3>
+                    <h3 className="text-3xl font-black text-slate-900 mb-2 text-center">Confirmed!</h3>
                     <p className="text-slate-500 font-bold text-center max-w-sm">
-                      Your response has been synchronized with the Mess Owner's dashboard. Thank you for being a part of SFIRN.
+                      Your response for <span className="text-emerald-600 font-black">{currentMealSlot}</span> has been synced with the Mess Owner.
                     </p>
                     <button
                       onClick={() => setIsSubmitted(false)}
                       className="mt-8 text-emerald-600 font-black uppercase tracking-widest text-xs hover:underline"
                     >
-                      Edit Response
+                      Change Status
                     </button>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-
-            {!isSubmitted && status !== 'pending' && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-8 flex items-center gap-4 p-5 bg-slate-900 rounded-3xl border border-white/10 shadow-2xl"
-              >
-                <div className={`p-2.5 rounded-xl ${status === 'present' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                  {status === 'present' ? <CheckCircle className="w-6 h-6" /> : <XCircle className="w-6 h-6" />}
-                </div>
-                <p className="text-sm font-bold text-slate-300">
-                  You have selected <span className="text-white">"{status === 'present' ? "I'll be there" : "Skip this meal"}"</span>. Click submit to notify the mess staff.
-                </p>
-              </motion.div>
-            )}
           </GlassCard>
         </div>
 
@@ -190,37 +190,36 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
               Meal Slots
             </h3>
             <div className="space-y-3">
-              {[
-                { name: 'Breakfast', time: '08:00 - 09:30', active: false },
-                { name: 'Lunch', time: '12:30 - 14:00', active: true },
-                { name: 'Dinner', time: '19:30 - 21:00', active: false },
-              ].map((slot) => (
-                <div
-                  key={slot.name}
-                  className={`p-5 rounded-2xl border transition-all duration-300 ${
-                    slot.active
-                      ? 'bg-emerald-50 border-emerald-200 shadow-inner'
-                      : 'bg-transparent border-transparent'
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-2.5 h-2.5 rounded-full ${slot.active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
-                      <span className={`font-black text-sm ${slot.active ? 'text-emerald-900' : 'text-slate-600'}`}>
-                        {slot.name}
-                      </span>
+              {mealSlots.map((slot) => {
+                const isActive = currentMealSlot === slot.id;
+                return (
+                  <div
+                    key={slot.id}
+                    className={`p-5 rounded-2xl border transition-all duration-300 ${
+                      isActive
+                        ? 'bg-emerald-50 border-emerald-200 shadow-inner'
+                        : 'bg-transparent border-transparent'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+                        <span className={`font-black text-sm ${isActive ? 'text-emerald-900' : 'text-slate-600'}`}>
+                          {slot.name}
+                        </span>
+                      </div>
+                      {isActive && (
+                        <span className="text-[9px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                          CURRENT
+                        </span>
+                      )}
                     </div>
-                    {slot.active && (
-                      <span className="text-[9px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                        CURRENT
-                      </span>
-                    )}
+                    <p className={`text-xs mt-1 font-bold ${isActive ? 'text-emerald-800' : 'text-slate-500'}`}>
+                      {slot.time}
+                    </p>
                   </div>
-                  <p className={`text-xs mt-1 font-bold ${slot.active ? 'text-emerald-800' : 'text-slate-500'}`}>
-                    {slot.time}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </GlassCard>
 
@@ -231,11 +230,10 @@ export const MealCheckIn: React.FC<MealCheckInProps> = ({ userRole }) => {
               </div>
               <h4 className="font-black text-xl mb-3 tracking-tight">Eco Impact</h4>
               <p className="text-emerald-50 text-sm font-medium leading-relaxed font-bold">
-                When teachers and students skip meals responsibly, we redirect the surplus to our 12+ partner NGOs.
+                Confirming attendance helps us redirect edible surplus to our 12+ partner NGOs.
               </p>
             </div>
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-400/20 rounded-full blur-3xl group-hover:bg-emerald-400/30 transition-all duration-700" />
           </div>
         </div>
       </div>

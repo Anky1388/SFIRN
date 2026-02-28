@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   ClipboardList,
@@ -11,8 +11,10 @@ import {
   Bell,
   UserCircle,
   BookOpen,
-  PlusSquare
+  PlusSquare,
+  Clock
 } from 'lucide-react';
+import { getCurrentMealSlot, format24hTime } from '../lib/utils';
 
 interface SidebarProps {
   activeTab: string;
@@ -22,8 +24,17 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSignOut, role }) => {
+  const [currentSlot, setCurrentSlot] = useState(getCurrentMealSlot());
+  const [currentTime, setCurrentTime] = useState(format24hTime(new Date()));
 
-  // Role-based Navigation Configuration
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlot(getCurrentMealSlot());
+      setCurrentTime(format24hTime(new Date()));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const getMenuItems = () => {
     const baseItems = [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -102,6 +113,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSig
       </div>
 
       <div className="mt-auto p-6 space-y-4">
+        {/* Real-time 24h Time Sync Indicator in Sidebar */}
+        <div className="px-4 py-3 bg-slate-900 rounded-2xl border border-white/10 flex flex-col gap-1 shadow-2xl">
+           <div className="flex items-center justify-between">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Live Clock</p>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+           </div>
+           <p className="text-xl font-black text-white tracking-tighter">{currentTime}</p>
+           <div className="pt-2 mt-2 border-t border-white/5 flex items-center gap-2">
+              <div className="p-1 bg-emerald-500/20 rounded text-emerald-400">
+                 <Clock className="w-3 h-3" />
+              </div>
+              <p className="text-[10px] font-bold text-slate-300 capitalize">{currentSlot} Active</p>
+           </div>
+        </div>
+
         <button
           onClick={() => setActiveTab('settings')}
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
